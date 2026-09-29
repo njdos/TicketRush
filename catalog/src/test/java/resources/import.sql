@@ -1,0 +1,11 @@
+CREATE TABLE events (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    venue VARCHAR(255) NOT NULL,
+    starts_at TIMESTAMP NOT NULL,
+    total_seats INT NOT NULL,
+    price NUMERIC(10, 2) NOT NULL,
+    organizer_id UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

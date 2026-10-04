@@ -1,4 +1,4 @@
-package com.rush.ticket.catalog.dtos;
+package com.rush.ticket.catalog.dto.base;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;

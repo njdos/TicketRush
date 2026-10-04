@@ -1,10 +1,11 @@
-package com.rush.ticket.catalog.controllers;
+package com.rush.ticket.catalog.integration.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.rush.ticket.catalog.dtos.EventRequestDto;
-import com.rush.ticket.catalog.dtos.EventResponseDto;
+import com.rush.ticket.catalog.controllers.CatalogController;
+import com.rush.ticket.catalog.dto.reqResp.EventRequestDto;
+import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
 import com.rush.ticket.catalog.services.EventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,6 +59,34 @@ class CatalogControllerTest {
                 .setMessageConverters(jacksonConverter)
                 .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
+    }
+
+    @Test
+    void shouldReturn200AndPagedEvents() throws Exception {
+        EventResponseDto responseDto = new EventResponseDto(
+                UUID.randomUUID(),
+                "Opera",
+                "Theater",
+                LocalDateTime.now().plusDays(2),
+                50,
+                new BigDecimal("70.00"),
+                UUID.randomUUID(),
+                java.time.Instant.now()
+        );
+
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<EventResponseDto> mockPage = new PageImpl<>(
+                new ArrayList<>(List.of(responseDto)), pageable, 1);
+
+        Mockito.when(eventService.listEvents(any(Pageable.class)))
+                .thenReturn(mockPage);
+
+        mockMvc.perform(get("/events")
+                        .param("page", "0")
+                        .param("size", "20")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].name").value("Opera"));
     }
 
     @Test

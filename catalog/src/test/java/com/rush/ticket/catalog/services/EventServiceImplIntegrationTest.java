@@ -1,18 +1,21 @@
 package com.rush.ticket.catalog.services;
 
-import com.rush.ticket.catalog.BaseIntegrationTest;
-import com.rush.ticket.catalog.dtos.EventRequestDto;
-import com.rush.ticket.catalog.dtos.EventResponseDto;
+import com.rush.ticket.catalog.dto.reqResp.EventRequestDto;
+import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
 import com.rush.ticket.catalog.entity.Event;
-import com.rush.ticket.catalog.exceptions.EventNotFoundException;
+import com.rush.ticket.catalog.exception.EventNotFoundException;
+import com.rush.ticket.catalog.integration.IntegrationTestBase;
+import com.rush.ticket.catalog.kafka.OutboxProcessor;
 import com.rush.ticket.catalog.repository.EventRepository;
-import org.junit.jupiter.api.AfterEach;
+import com.rush.ticket.catalog.repository.OutboxEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -20,18 +23,19 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class EventServiceImplIntegrationTest extends BaseIntegrationTest {
+class EventServiceImplIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private EventService eventService;
 
     @Autowired
-    private EventRepository eventRepository;
+    private OutboxEventRepository outboxEventRepository;
 
-    @AfterEach
-    void cleanUp() {
-        eventRepository.deleteAll();
-    }
+    @Autowired
+    private OutboxProcessor outboxProcessor;
+
+    @Autowired
+    private EventRepository eventRepository;
 
     @Test
     void shouldCreateEventInDatabase() {
@@ -125,4 +129,56 @@ class EventServiceImplIntegrationTest extends BaseIntegrationTest {
         assertThatThrownBy(() -> eventService.updateEvent(randomId, updateRequest))
                 .isInstanceOf(EventNotFoundException.class);
     }
+
+    @Test
+    void shouldCreateEventAndSaveItToOutboxTableTable() {
+        // Arrange
+        UUID organizerId = UUID.randomUUID();
+        EventRequestDto request = new EventRequestDto(
+                "Outbox Fest", "Postgres Room", LocalDateTime.now().plusDays(1), 500, new BigDecimal("99.99")
+        );
+
+        // Act
+        EventResponseDto response = eventService.createEvent(request, organizerId);
+
+        // Assert
+        assertThat(response.id()).isNotNull();
+
+        // 🔥 Проверяем, что в рамках одной транзакции запись попала в Outbox в статусе PENDING
+        var outboxEvents = outboxEventRepository.findTop10ByStatusOrderByCreatedAtAsc("PENDING");
+        assertThat(outboxEvents).isNotEmpty();
+
+        var targetEvent = outboxEvents.stream()
+                .filter(e -> e.getAggregateId().equals(response.id().toString()))
+                .findFirst();
+
+        assertThat(targetEvent).isPresent();
+        assertThat(targetEvent.get().getEventType()).isEqualTo("SeatsGenerated");
+        assertThat(targetEvent.get().getPayload()).contains("Outbox Fest");
+    }
+
+    @Test
+    void shouldSuccessfullyProcessOutboxEventAndChangeStatusToSent() {
+        // Arrange
+        UUID organizerId = UUID.randomUUID();
+        EventRequestDto request = new EventRequestDto(
+                "Async Dynamic Show", "Kafka Hall", LocalDateTime.now().plusDays(2), 250, new BigDecimal("45.00")
+        );
+
+        // Act
+        EventResponseDto response = eventService.createEvent(request, organizerId);
+
+        outboxProcessor.processPendingOutboxEvents();
+
+        // Assert
+        var events = outboxEventRepository.findAll();
+        var processedEvent = events.stream()
+                .filter(e -> e.getAggregateId().equals(response.id().toString()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(processedEvent.getStatus()).isEqualTo("SENT");
+        assertThat(processedEvent.getProcessedAt()).isNotNull();
+    }
+
 }

@@ -10,7 +10,13 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "events")
+@Table(
+        name = "events",
+        indexes = {
+                @Index(name = "idx_events_venue_starts", columnList = "venue, starts_at"),
+                @Index(name = "idx_events_name", columnList = "name")
+        }
+)
 @Getter
 @Setter
 public class Event {

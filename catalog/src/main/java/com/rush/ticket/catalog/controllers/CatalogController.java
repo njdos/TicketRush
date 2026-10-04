@@ -1,8 +1,8 @@
 package com.rush.ticket.catalog.controllers;
 
-import com.rush.ticket.catalog.dtos.ApiResponse;
-import com.rush.ticket.catalog.dtos.EventRequestDto;
-import com.rush.ticket.catalog.dtos.EventResponseDto;
+import com.rush.ticket.catalog.dto.base.ApiResponse;
+import com.rush.ticket.catalog.dto.reqResp.EventRequestDto;
+import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
 import com.rush.ticket.catalog.services.EventService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -41,6 +41,7 @@ public class CatalogController {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(ApiResponse.success(eventService.listEvents(pageable)));
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<EventResponseDto>> getEventById(@PathVariable UUID id) {

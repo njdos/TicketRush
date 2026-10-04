@@ -1,6 +1,6 @@
 package com.rush.ticket.catalog.mapper;
 
-import com.rush.ticket.catalog.dtos.EventResponseDto;
+import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
 import com.rush.ticket.catalog.entity.Event;
 
 public final class EventMapper {

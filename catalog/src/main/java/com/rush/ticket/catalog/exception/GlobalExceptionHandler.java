@@ -1,4 +1,4 @@
-package com.rush.ticket.catalog.exceptions;
+package com.rush.ticket.catalog.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.MDC;

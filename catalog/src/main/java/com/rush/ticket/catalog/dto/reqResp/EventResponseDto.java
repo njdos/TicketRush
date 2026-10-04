@@ -1,4 +1,4 @@
-package com.rush.ticket.catalog.dtos;
+package com.rush.ticket.catalog.dto.reqResp;
 
 import java.math.BigDecimal;
 import java.time.Instant;

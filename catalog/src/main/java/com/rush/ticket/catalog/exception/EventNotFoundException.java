@@ -1,4 +1,4 @@
-package com.rush.ticket.catalog.exceptions;
+package com.rush.ticket.catalog.exception;
 
 import java.util.UUID;
 

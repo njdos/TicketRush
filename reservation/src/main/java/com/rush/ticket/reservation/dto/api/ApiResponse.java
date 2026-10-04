@@ -1,4 +1,4 @@
-package com.rush.ticket.reservation.dto;
+package com.rush.ticket.reservation.dto.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

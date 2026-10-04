@@ -1,6 +1,7 @@
 package com.rush.ticket.reservation.entity;
 
 import jakarta.persistence.*;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -20,12 +21,13 @@ public class Seat {
     private SeatStatus status = SeatStatus.FREE;
 
     @Version
-    private Long version; // optimistic-lock запасний захист, якщо Redis недоступний
+    private Long version;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected Seat() {}
+    protected Seat() {
+    }
 
     public Seat(UUID seatId, UUID eventId) {
         this.seatId = seatId;
@@ -33,7 +35,9 @@ public class Seat {
     }
 
     @PrePersist
-    void onCreate() { this.createdAt = Instant.now(); }
+    void onCreate() {
+        this.createdAt = Instant.now();
+    }
 
     public void markHeld() {
         if (status != SeatStatus.FREE) {
@@ -42,11 +46,27 @@ public class Seat {
         this.status = SeatStatus.HELD;
     }
 
-    public void markSold() { this.status = SeatStatus.SOLD; }
-    public void markFree() { this.status = SeatStatus.FREE; }
+    public void markSold() {
+        this.status = SeatStatus.SOLD;
+    }
 
-    public UUID getSeatId() { return seatId; }
-    public UUID getEventId() { return eventId; }
-    public SeatStatus getStatus() { return status; }
-    public Long getVersion() { return version; }
+    public void markFree() {
+        this.status = SeatStatus.FREE;
+    }
+
+    public UUID getSeatId() {
+        return seatId;
+    }
+
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    public SeatStatus getStatus() {
+        return status;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
 }

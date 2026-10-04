@@ -1,4 +1,4 @@
-package com.rush.ticket.reservation.dto;
+package com.rush.ticket.reservation.dto.reqResp;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;

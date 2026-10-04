@@ -1,3 +1,5 @@
+-- V1__create_reservation_tables.sql
+
 CREATE TABLE seats (
     seat_id    UUID PRIMARY KEY,
     event_id   UUID NOT NULL,
@@ -21,3 +23,16 @@ CREATE TABLE reservations (
 );
 
 CREATE INDEX idx_reservations_status_expires ON reservations(status, expires_at);
+
+
+CREATE TABLE outbox_events (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    aggregate_id VARCHAR(255) NOT NULL,
+    event_type   VARCHAR(100) NOT NULL,
+    payload      TEXT NOT NULL,
+    status       VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_at   TIMESTAMP NOT NULL DEFAULT now(),
+    processed_at TIMESTAMP
+);
+
+CREATE INDEX idx_res_outbox_pending ON outbox_events(status, created_at);

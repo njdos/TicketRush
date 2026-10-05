@@ -4,7 +4,7 @@ import com.rush.ticket.catalog.dto.reqResp.EventRequestDto;
 import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
 import com.rush.ticket.catalog.entity.Event;
 import com.rush.ticket.catalog.exception.EventNotFoundException;
-import com.rush.ticket.catalog.integration.IntegrationTestBase;
+import com.rush.ticket.catalog.integration.BaseIntegrationTest;
 import com.rush.ticket.catalog.kafka.OutboxProcessor;
 import com.rush.ticket.catalog.repository.EventRepository;
 import com.rush.ticket.catalog.repository.OutboxEventRepository;
@@ -12,10 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class EventServiceImplIntegrationTest extends IntegrationTestBase {
+class EventServiceImplIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private EventService eventService;

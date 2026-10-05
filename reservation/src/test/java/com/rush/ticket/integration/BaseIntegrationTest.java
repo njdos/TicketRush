@@ -14,7 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 @Import(TestContainersConfiguration.class)
-public abstract class IntegrationTestBase {
+public abstract class BaseIntegrationTest {
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;

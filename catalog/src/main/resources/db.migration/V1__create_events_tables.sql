@@ -1,4 +1,4 @@
--- V1__create_events_tables.sql
+-- V1__create_payment_tables.sql
 
 CREATE TABLE IF NOT EXISTS events (
                                       id UUID PRIMARY KEY,

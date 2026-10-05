@@ -19,9 +19,7 @@ public class CatalogEventListener {
 
     private final SeatRepository seatRepository;
     private final StringRedisTemplate redisTemplate;
-    private static final String TOPIC = "seats-generated-topic";
-
-    @KafkaListener(topics = TOPIC, groupId = "reservation-group")
+    @KafkaListener(topics = "seats-generated-topic", groupId = "reservation-group")
     @Transactional
     public void handleSeatsGenerated(SeatsGeneratedEvent event) {
         String idempotencyKey = "processed_event:" + event.eventId();

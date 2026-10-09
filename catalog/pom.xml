@@ -12,7 +12,7 @@
 
 	<groupId>com.rush.ticket</groupId>
 	<artifactId>catalog</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>catalog-service</name>
 	<description>Catalog Service for Rush Ticket System</description>
 

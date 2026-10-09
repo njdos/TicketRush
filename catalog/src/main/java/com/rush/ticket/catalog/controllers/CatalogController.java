@@ -27,7 +27,7 @@ public class CatalogController {
     @PostMapping
     public ResponseEntity<ApiResponse<EventResponseDto>> createEvent(
             @Valid @RequestBody EventRequestDto requestDto,
-            @RequestHeader("X-User-Id") UUID organizerId // тимчасово, поки немає Keycloak
+            @RequestHeader("X-User-Id") UUID organizerId
     ) {
         EventResponseDto created = eventService.createEvent(requestDto, organizerId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));

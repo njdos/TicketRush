@@ -2,8 +2,8 @@ package com.rush.ticket.catalog.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rush.ticket.catalog.dto.reqResp.EventRequestDto;
-import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
+import com.rush.ticket.catalog.dto.req.EventRequestDto;
+import com.rush.ticket.catalog.dto.resp.EventResponseDto;
 import com.rush.ticket.catalog.dto.event.SeatsGeneratedEvent;
 import com.rush.ticket.catalog.entity.Event;
 import com.rush.ticket.catalog.entity.OutboxEvent;

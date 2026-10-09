@@ -3,13 +3,13 @@ spring:
     name: catalog
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/ticketrush_catalog
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ticketrush_catalog}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
+      minimum-idle: ${HIKARI_MINIMUM_IDLE:5}
+      maximum-pool-size: ${HIKARI_MAXIMUM_POOL_SIZE:20}
       idle-timeout: 30000
       max-lifetime: 2000000
       connection-timeout: 30000
@@ -18,14 +18,15 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
+      ddl-auto: update
+    show-sql: ${SPRING_JPA_SHOW_SQL:true}
     properties:
       hibernate:
         format_sql: true
+        use_sql_comments: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -35,6 +36,9 @@ spring:
         retries: 2147483647
         max.in.flight.requests.per.connection: 5
 
+server:
+  port: 8081
+
 management:
   endpoints:
     web:
@@ -43,10 +47,14 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
 
 logging:
   level:
     root: INFO
     com.rush.ticket.catalog: INFO
+    org.postgresql: WARN
+    org.apache.kafka: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

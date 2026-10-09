@@ -1,8 +1,8 @@
 package com.rush.ticket.catalog.controllers;
 
 import com.rush.ticket.catalog.dto.base.ApiResponse;
-import com.rush.ticket.catalog.dto.reqResp.EventRequestDto;
-import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
+import com.rush.ticket.catalog.dto.req.EventRequestDto;
+import com.rush.ticket.catalog.dto.resp.EventResponseDto;
 import com.rush.ticket.catalog.services.EventService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;

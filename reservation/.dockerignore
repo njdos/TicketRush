@@ -1,0 +1,31 @@
+# Build & Dependency Directories
+target/
+build/
+out/
+.gradle/
+.m2/
+
+# IDE & System Trash
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Version Control & Docker Configs
+.git/
+.gitignore
+docker-compose*.yml
+Dockerfile
+README.md
+HELP.md
+LICENSE
+
+# Logs and Temporary Files
+*.log
+tmp/

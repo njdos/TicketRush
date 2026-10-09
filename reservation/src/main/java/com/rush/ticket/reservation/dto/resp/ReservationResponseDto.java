@@ -1,4 +1,4 @@
-package com.rush.ticket.reservation.dto.reqResp;
+package com.rush.ticket.reservation.dto.resp;
 
 import com.rush.ticket.reservation.entity.Reservation;
 import com.rush.ticket.reservation.entity.ReservationStatus;

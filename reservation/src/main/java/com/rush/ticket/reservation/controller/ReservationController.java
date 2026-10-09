@@ -1,8 +1,8 @@
 package com.rush.ticket.reservation.controller;
 
 import com.rush.ticket.reservation.dto.api.ApiResponse;
-import com.rush.ticket.reservation.dto.reqResp.ReservationRequestDto;
-import com.rush.ticket.reservation.dto.reqResp.ReservationResponseDto;
+import com.rush.ticket.reservation.dto.req.ReservationRequestDto;
+import com.rush.ticket.reservation.dto.resp.ReservationResponseDto;
 import com.rush.ticket.reservation.entity.Reservation;
 import com.rush.ticket.reservation.service.ReservationService;
 import jakarta.validation.Valid;

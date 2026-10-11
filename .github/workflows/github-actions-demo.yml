@@ -96,9 +96,11 @@ jobs:
 
       - name: Spin up Infrastructure via Docker Compose
         if: ${{ github.event.inputs.skip_tests != 'true' }}
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           echo "=== Deploying Local Mesh for Verification ==="
-          docker compose up -d
+          DOCKER_REGISTRY=$DOCKER_USER TAG=latest docker compose up -d
 
       - name: Verify Architecture Health & Inspect Logs
         if: ${{ github.event.inputs.skip_tests != 'true' }}

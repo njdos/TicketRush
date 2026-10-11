@@ -27,7 +27,7 @@ services:
     build:
       context: ./catalog
       dockerfile: Dockerfile
-    image: tr-catalog-service:latest
+    image: ${DOCKER_REGISTRY:-local}/tr-catalog-service:${TAG:-latest}
     container_name: tr-catalog-service
     ports:
       - "127.0.0.1:8085:8081"
@@ -64,7 +64,7 @@ services:
     build:
       context: ./reservation
       dockerfile: Dockerfile
-    image: tr-reservation-service:latest
+    image: ${DOCKER_REGISTRY:-local}/tr-reservation-service:${TAG:-latest}
     container_name: tr-reservation-service
     ports:
       - "127.0.0.1:8082:8082"
@@ -105,7 +105,7 @@ services:
     build:
       context: ./payment
       dockerfile: Dockerfile
-    image: tr-payment-service:latest
+    image: ${DOCKER_REGISTRY:-local}/tr-payment-service:${TAG:-latest}
     container_name: tr-payment-service
     ports:
       - "127.0.0.1:8086:8083"

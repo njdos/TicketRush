@@ -1,8 +1,8 @@
 package com.rush.ticket.catalog.controllers;
 
 import com.rush.ticket.catalog.dto.base.ApiResponse;
-import com.rush.ticket.catalog.dto.reqResp.EventRequestDto;
-import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
+import com.rush.ticket.catalog.dto.req.EventRequestDto;
+import com.rush.ticket.catalog.dto.resp.EventResponseDto;
 import com.rush.ticket.catalog.services.EventService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -27,7 +27,7 @@ public class CatalogController {
     @PostMapping
     public ResponseEntity<ApiResponse<EventResponseDto>> createEvent(
             @Valid @RequestBody EventRequestDto requestDto,
-            @RequestHeader("X-User-Id") UUID organizerId // тимчасово, поки немає Keycloak
+            @RequestHeader("X-User-Id") UUID organizerId
     ) {
         EventResponseDto created = eventService.createEvent(requestDto, organizerId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));

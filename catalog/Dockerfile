@@ -14,6 +14,8 @@ RUN java -Djarmode=layertools -jar app.jar extract --destination /app/extracted
 
 FROM eclipse-temurin:17-jre-alpine AS runtime
 WORKDIR /app
+
+# Создаем системных пользователей динамически (для каталога - catalog, для резервации - reservation и т.д.)
 RUN addgroup --gid 10001 --system ticketrush \
     && adduser --uid 10001 --system --ingroup ticketrush --home /home/catalog catalog \
     && mkdir -p /app/dumps /app/logs \
@@ -25,38 +27,7 @@ COPY --from=extractor --chown=catalog:ticketrush /app/extracted/snapshot-depende
 COPY --from=extractor --chown=catalog:ticketrush /app/extracted/application/ ./
 
 USER catalog:ticketrush
-EXPOSE 8080
+EXPOSE 8081
 
-ENV JDK_JAVA_OPTIONS="\
-  # --- Container & Memory Alignment --- \
-  -XX:+UseContainerSupport \
-  -XX:InitialRAMPercentage=75.0 \
-  -XX:MaxRAMPercentage=75.0 \
-  -XX:MaxMetaspaceSize=384m \
-  -Xss512k \
-  \
-  # --- G1GC Performance Tuning --- \
-  -XX:+UseG1GC \
-  -XX:+DisableExplicitGC \
-  -XX:MaxGCPauseMillis=200 \
-  -XX:+UseStringDeduplication \
-  -XX:G1PeriodicGCInterval=60000 \
-  -XX:+G1PeriodicGCInvokesConcurrent \
-  \
-  # --- JIT Compiler & Runtime Optimizations --- \
-  -XX:-OmitStackTraceInFastThrow \
-  \
-  # --- Crash Management & Fail-Fast --- \
-  -XX:+HeapDumpOnOutOfMemoryError \
-  -XX:HeapDumpPath=/app/dumps/ \
-  -XX:+ExitOnOutOfMemoryError \
-  \
-  # --- System Properties & Security --- \
-  -Dfile.encoding=UTF-8 \
-  -Dspring.backgroundpreinitializer.ignore=true"
-
-ENV GC_LOG_OPTIONS="\
-  -Xlog:gc*,gc+age=trace:file=/app/logs/gc.log:time,uptime,pid:filecount=5,filesize=50M \
-  -XX:+XLogAsynchronous"
-
-ENTRYPOINT ["sh", "-c", "java ${GC_LOG_OPTIONS} org.springframework.boot.loader.launch.JarLauncher"]
+# Инструкция запуска считывает внешние переменные среды, сгенерированные Docker Compose/Kubernetes
+ENTRYPOINT ["sh", "-c", "java ${GC_LOG_OPTIONS} ${JDK_JAVA_OPTIONS} org.springframework.boot.loader.launch.JarLauncher"]

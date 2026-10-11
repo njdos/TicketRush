@@ -23,7 +23,7 @@ public class OutboxProcessor {
 
     private static final String TOPIC = "payment-requests-topic";
 
-    @Scheduled(fixedDelay = 1000) // Execute background sweeps every 1 second
+    @Scheduled(fixedDelay = 1000)
     @Transactional
     public void processPendingBillingEvents() {
         List<OutboxEvent> pendingEvents = outboxEventRepository.findTop10ByStatusOrderByCreatedAtAsc("PENDING");
@@ -33,7 +33,7 @@ public class OutboxProcessor {
         }
 
         for (OutboxEvent event : pendingEvents) {
-            String kafkaMessageKey = event.getAggregateId(); // Using reservationId as the message routing partition key [06.09.2026 20:41]
+            String kafkaMessageKey = event.getAggregateId();
 
             kafkaTemplate.send(TOPIC, kafkaMessageKey, event.getPayload())
                     .whenComplete((result, ex) -> {

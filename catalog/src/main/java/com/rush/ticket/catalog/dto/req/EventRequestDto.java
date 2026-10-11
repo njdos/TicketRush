@@ -1,4 +1,4 @@
-package com.rush.ticket.catalog.dto.reqResp;
+package com.rush.ticket.catalog.dto.req;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Future;

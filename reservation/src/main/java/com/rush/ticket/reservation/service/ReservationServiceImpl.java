@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.NoSuchElementException;
@@ -70,7 +71,7 @@ public class ReservationServiceImpl implements ReservationService {
         PaymentRequestedEvent paymentEvent = new PaymentRequestedEvent(
                 reservation.getId(),
                 reservation.getUserId(),
-                null // TODO: ціна має братись з Seat/Event, зараз в доменній моделі немає price — додати поле при потребі
+                BigDecimal.valueOf(20.00)
         );
 
         try {

@@ -1,7 +1,7 @@
 package com.rush.ticket.catalog.services;
 
-import com.rush.ticket.catalog.dto.reqResp.EventRequestDto;
-import com.rush.ticket.catalog.dto.reqResp.EventResponseDto;
+import com.rush.ticket.catalog.dto.req.EventRequestDto;
+import com.rush.ticket.catalog.dto.resp.EventResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

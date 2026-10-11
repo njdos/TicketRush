@@ -54,15 +54,6 @@ jobs:
       - name: Check Java Version
         run: java --version
 
-      - name: Debug Repository Structure
-        run: |
-          echo "=== Текущая директория ==="
-          pwd
-          echo "=== Список папок в корне проекта ==="
-          ls -la
-          echo "=== Ищем все pom.xml в проекте ==="
-          find . -name "pom.xml"
-
       - name: Run Unit and Slice Tests
         run: |
           echo "=== Start unit-tests for each microservice ==="

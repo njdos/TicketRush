@@ -1,0 +1,40 @@
+# SECRETS & LOCAL ENVIRONMENT CONFS (CRITICAL SAFETY)
+.env
+.env.local
+*.local.properties
+secrets/
+
+# SYSTEM & APPLICATION LOGS / DUMPS
+*.log
+/app/logs/
+/app/dumps/
+/catalog/logs/
+/catalog/dumps/
+/reservation/logs/
+/reservation/dumps/
+/payment/logs/
+/payment/dumps/
+hs_err_pid*
+replay_pid*
+
+# BUILD ARTIFACTS (MAVEN / GRADLE)
+target/
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE SPECIFIC (INTELLIJ IDEA / ECLIPSE / VS CODE)
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+**/out/
+
+# DOCKER & DATA VOLUMES (LOCAL PERSISTENCE)
+.docker_volumes/
+postgres_data/
+redis_data/
+
+# OPERATING SYSTEM RUBBISH
+.DS_Store
+Thumbs.db

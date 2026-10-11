@@ -125,12 +125,10 @@ jobs:
       - name: Tag and Push Docker Images
         run: |
           echo "=== Tagging images for Docker Hub ==="
-          # Переназначаем локальные теги образов на твой репозиторий Docker Hub
           docker tag tr-catalog-service:latest $DOCKER_REGISTRY/tr-catalog-service:latest
           docker tag tr-reservation-service:latest $DOCKER_REGISTRY/tr-reservation-service:latest
           docker tag tr-payment-service:latest $DOCKER_REGISTRY/tr-payment-service:latest
           
-          # Также создаем тег с уникальным номером сборки (для отката версий)
           docker tag tr-catalog-service:latest $DOCKER_REGISTRY/tr-catalog-service:${{ github.run_number }}
           docker tag tr-reservation-service:latest $DOCKER_REGISTRY/tr-reservation-service:${{ github.run_number }}
           docker tag tr-payment-service:latest $DOCKER_REGISTRY/tr-payment-service:${{ github.run_number }}

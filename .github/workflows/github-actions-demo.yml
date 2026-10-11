@@ -52,7 +52,9 @@ jobs:
         if: ${{ github.event.inputs.skip_tests != 'true' }}
         run: |
           echo "=== Executing Test Suite for Microservices ==="
-          mvn -B clean test
+          mvn -B -f catalog/pom.xml clean test
+          mvn -B -f reservation/pom.xml clean test
+          mvn -B -f payment/pom.xml clean test
 
       - name: Publish Test Report
         uses: dorny/test-reporter@v1
@@ -66,7 +68,9 @@ jobs:
       - name: Package Applications
         run: |
           echo "=== Compiling JAR Artifacts ==="
-          mvn -B package -DskipTests -Dmaven.javadoc.skip=true
+          mvn -B -f catalog/pom.xml package -DskipTests -Dmaven.javadoc.skip=true
+          mvn -B -f reservation/pom.xml package -DskipTests -Dmaven.javadoc.skip=true
+          mvn -B -f payment/pom.xml package -DskipTests -Dmaven.javadoc.skip=true
 
       - name: Inject Infrastructure Secrets & Context
         run: |

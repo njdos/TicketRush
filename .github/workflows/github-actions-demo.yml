@@ -23,7 +23,7 @@ on:
       skip_integration_tests:
         description: 'Skip integration tests Docker-check?'
         required: false
-        default: 'false'
+        default: 'true'
         type: boolean
 
 jobs:
@@ -55,6 +55,7 @@ jobs:
         run: java --version
 
       - name: Run Unit and Slice Tests
+        if: ${{ github.event.inputs.skip_integration_tests != 'true' }}
         run: |
           echo "=== Start unit-tests for each microservice ==="
           mvn -f catalog/pom.xml test

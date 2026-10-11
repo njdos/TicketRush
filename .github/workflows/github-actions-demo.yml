@@ -80,7 +80,6 @@ jobs:
           echo "MkU3OEVBNTcwNTJENDM2Qk" > secrets/kafka_cluster_id.txt
 
       - name: Log in to Docker Hub
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -130,7 +129,6 @@ jobs:
           done
 
       - name: Push Docker Images to Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           RUN_NUMBER: ${{ github.run_number }}

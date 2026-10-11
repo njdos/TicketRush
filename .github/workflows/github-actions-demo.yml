@@ -20,7 +20,7 @@ on:
 
   workflow_dispatch:
     inputs:
-      skip_integration_tests:
+      skip_tests:
         description: 'Skip integration tests Docker-check?'
         required: false
         default: 'true'
@@ -55,7 +55,7 @@ jobs:
         run: java --version
 
       - name: Run Unit and Slice Tests
-        if: ${{ github.event.inputs.skip_integration_tests != 'true' }}
+        if: ${{ github.event.inputs.skip_tests != 'true' }}
         run: |
           echo "=== Start unit-tests for each microservice ==="
           mvn -f catalog/pom.xml test
@@ -83,7 +83,7 @@ jobs:
           docker compose up --build -d
 
       - name: Verify Architecture Health & Inspect Logs
-        if: ${{ github.event.inputs.skip_integration_tests != 'true' }}
+        if: ${{ github.event.inputs.skip_tests != 'true' }}
         run: |
           echo "Waiting 35 seconds for internal health checks of Postgres, Redis, and Kafka to complete..."
           sleep 35

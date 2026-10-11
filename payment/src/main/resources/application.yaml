@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: payment
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ticketrush_payment}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: ${HIKARI_MINIMUM_IDLE:5}
+      maximum-pool-size: ${HIKARI_MAXIMUM_POOL_SIZE:20}
+      idle-timeout: 30000
+      max-lifetime: 2000000
+      connection-timeout: 30000
+      pool-name: PaymentHikariCP
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: ${SPRING_JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    listener:
+      ack-mode: manual_immediate
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+        acks: all
+        retries: 2147483647
+        max.in.flight.requests.per.connection: 5
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:tr-redis-cache}
+      port: ${SPRING_REDIS_PORT:6379}
+
+server:
+  port: 8083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.rush.ticket.payment: INFO
+    org.postgresql: WARN
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

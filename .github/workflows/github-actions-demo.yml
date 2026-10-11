@@ -1,18 +1,154 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-on: [push]
+name: TicketRush CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'catalog/**'
+      - 'reservation/**'
+      - 'payment/**'
+      - 'pom.xml'
+      - '.github/workflows/ci-cd.yml'
+
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'catalog/**'
+      - 'reservation/**'
+      - 'payment/**'
+      - 'pom.xml'
+
+  workflow_dispatch:
+    inputs:
+      skip_integration_tests:
+        description: 'Skip integration tests Docker-check?'
+        required: false
+        default: 'false'
+        type: boolean
+
 jobs:
-  Explore-GitHub-Actions:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    env:
+      SPRING_PROFILE: test
+      DB_CATALOG: catalog_db
+      DB_RESERVATION: reservation_db
+      DB_PAYMENT: payment_db
+      REDIS_PORT: 6379
+      JVM_OPTIMIZED_OPTIONS: "-Xms512m -Xmx512m"
+      JVM_GC_LOGS: "-Xlog:gc"
+      # Имя твоего пространства в Docker Hub (берется из секретов репозитория)
+      DOCKER_REGISTRY: ${{ secrets.DOCKERHUB_USERNAME }}
+
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
-        uses: actions/checkout@v6
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Check Java Version
+        run: java --version
+
+      - name: Run Unit and Slice Tests
         run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+          echo "=== Start unit-tests for each microservice ==="
+          mvn -f catalog/pom.xml test
+          mvn -f reservation/pom.xml test
+          mvn -f payment/pom.xml test
+
+      - name: Package Applications
+        run: |
+          echo "=== Compiling JAR artifacts ==="
+          mvn -f catalog/pom.xml package -DskipTests
+          mvn -f reservation/pom.xml package -DskipTests
+          mvn -f payment/pom.xml package -DskipTests
+
+      - name: Generate Infrastructure Mock Secrets
+        run: |
+          mkdir -p secrets
+          echo "postgres_admin" > secrets/postgres_user.txt
+          echo "supersecretpassword" > secrets/postgres_password.txt
+          echo "MkU3OEVBNTcwNTJENDM2Qk" > secrets/kafka_cluster_id.txt
+          mkdir -p init-scripts
+
+      - name: Spin up Infrastructure via Docker Compose
+        run: |
+          echo "=== Building images and running containers ==="
+          docker compose up --build -d
+
+      - name: Verify Architecture Health & Inspect Logs
+        if: ${{ github.event.inputs.skip_integration_tests != 'true' }}
+        run: |
+          echo "Waiting 35 seconds for internal health checks of Postgres, Redis, and Kafka to complete..."
+          sleep 35
+          
+          echo "=== Container status (all must be running / healthy) ==="
+          docker compose ps
+          
+          echo "=== Analysis of application logs for critical errors ==="
+          if docker compose logs catalog-service | grep -q "ERROR"; then
+            echo "❌ Catalog Service contains ERRORS!"
+            docker compose logs catalog-service --tail=50
+            exit 1
+          else
+            echo "✅ Catalog Service: OK"
+          fi
+          
+          if docker compose logs reservation-service | grep -q "ERROR"; then
+            echo "❌ Reservation Service contains ERRORS!"
+            docker compose logs reservation-service --tail=50
+            exit 1
+          else
+            echo "✅ Reservation Service: OK"
+          fi
+          
+          if docker compose logs payment-service | grep -q "ERROR"; then
+            echo "❌ Payment Service contains ERRORS!"
+            docker compose logs payment-service --tail=50
+            exit 1
+          else
+            echo "✅ Payment Service: OK"
+          fi
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag and Push Docker Images
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "=== Tagging images for Docker Hub ==="
+          # Переназначаем локальные теги образов на твой репозиторий Docker Hub
+          docker tag tr-catalog-service:latest $DOCKER_REGISTRY/tr-catalog-service:latest
+          docker tag tr-reservation-service:latest $DOCKER_REGISTRY/tr-reservation-service:latest
+          docker tag tr-payment-service:latest $DOCKER_REGISTRY/tr-payment-service:latest
+          
+          # Также создаем тег с уникальным номером сборки (для отката версий)
+          docker tag tr-catalog-service:latest $DOCKER_REGISTRY/tr-catalog-service:${{ github.run_number }}
+          docker tag tr-reservation-service:latest $DOCKER_REGISTRY/tr-reservation-service:${{ github.run_number }}
+          docker tag tr-payment-service:latest $DOCKER_REGISTRY/tr-payment-service:${{ github.run_number }}
+
+          echo "=== Pushing images to Docker Hub ==="
+          docker push $DOCKER_REGISTRY/tr-catalog-service:latest
+          docker push $DOCKER_REGISTRY/tr-catalog-service:${{ github.run_number }}
+          
+          docker push $DOCKER_REGISTRY/tr-reservation-service:latest
+          docker push $DOCKER_REGISTRY/tr-reservation-service:${{ github.run_number }}
+          
+          docker push $DOCKER_REGISTRY/tr-payment-service:latest
+          docker push $DOCKER_REGISTRY/tr-payment-service:${{ github.run_number }}
+
+      - name: Destruct Infrastructure
+        if: always()
+        run: |
+          echo "=== Stopping the environment and deleting data ==="
+          docker compose down -v

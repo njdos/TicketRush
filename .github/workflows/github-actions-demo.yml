@@ -56,24 +56,31 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_ORG: ${{ vars.SONAR_ORGANIZATION }}
         run: |
           echo "=== Running Multi-Module Tests & Static Analysis ==="
           mvn -B clean verify sonar:sonar -Pintegration-tests \
             -f catalog/pom.xml \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.organization=$SONAR_ORG \
+            -Dsonar.projectKey=${SONAR_ORG}_ticketrush-$MODULE \
             -Dsonar.qualitygate.wait=true
           
           mvn -B clean verify sonar:sonar -Pintegration-tests \
             -f reservation/pom.xml \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.organization=$SONAR_ORG \
+            -Dsonar.projectKey=${SONAR_ORG}_ticketrush-$MODULE \
             -Dsonar.qualitygate.wait=true
           
           mvn -B clean verify sonar:sonar -Pintegration-tests \
             -f payment/pom.xml \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.organization=$SONAR_ORG \
+            -Dsonar.projectKey=${SONAR_ORG}_ticketrush-$MODULE \
             -Dsonar.qualitygate.wait=true
 
       - name: Publish Test Report

@@ -1,9 +1,6 @@
-package com.rush.ticket.catalog.integration.exception;
+package com.rush.ticket.catalog.exception;
 
 import com.rush.ticket.catalog.dto.base.ApiResponse;
-import com.rush.ticket.catalog.exception.AppErrorCode;
-import com.rush.ticket.catalog.exception.EventNotFoundException;
-import com.rush.ticket.catalog.exception.GlobalExceptionHandler;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -15,13 +12,9 @@ import org.slf4j.MDC;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.validation.BindException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Collections;
 import java.util.Set;
@@ -31,7 +24,8 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class GlobalExceptionHandlerTestSuite {
 
@@ -63,7 +57,7 @@ class GlobalExceptionHandlerTestSuite {
         assertNotNull(AppErrorCode.EVENT_NOT_FOUND.getDefaultTitle());
     }
 
-        @Test
+    @Test
     void handleCatalogDomainException_ReturnsCorrectProblemDetail() throws Exception {
         mockMvc.perform(get("/test-exception/domain")
                         .contentType(MediaType.APPLICATION_JSON))

@@ -1,7 +1,6 @@
-package com.rush.ticket.catalog.integration.repository;
+package com.rush.ticket.catalog.repository;
 
 import com.rush.ticket.catalog.entity.OutboxEvent;
-import com.rush.ticket.catalog.repository.OutboxEventRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;

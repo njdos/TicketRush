@@ -1,4 +1,4 @@
-package com.rush.ticket.catalog.controllers;
+package com.rush.ticket.catalog.controller;
 
 import com.rush.ticket.catalog.dto.base.ApiResponse;
 import com.rush.ticket.catalog.dto.req.EventRequestDto;

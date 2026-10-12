@@ -27,6 +27,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    name: Build, Test, and Quality Check
 
     env:
       SPRING_PROFILE: test
@@ -40,6 +41,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -48,26 +51,44 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Run Unit and Slice Tests
+      - name: Run Tests & SonarQube Analysis
         if: ${{ github.event.inputs.skip_tests != 'true' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          echo "=== Executing Test Suite for Microservices ==="
-          mvn -B -f catalog/pom.xml clean test
-          mvn -B -f reservation/pom.xml clean test
-          mvn -B -f payment/pom.xml clean test
+          echo "=== Running Multi-Module Tests & Static Analysis ==="
+          mvn -B clean verify sonar:sonar \
+            -f catalog/pom.xml \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.qualitygate.wait=true
+          
+          mvn -B clean verify sonar:sonar \
+            -f reservation/pom.xml \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.qualitygate.wait=true
+          
+          mvn -B clean verify sonar:sonar \
+            -f payment/pom.xml \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.qualitygate.wait=true
 
       - name: Publish Test Report
         uses: dorny/test-reporter@v1
         if: always() && github.event.inputs.skip_tests != 'true'
         with:
           name: Maven Test Results
-          path: '**/target/surefire-reports/*.xml'
+          path: '**/target/*-reports/*.xml'
           reporter: java-junit
           fail-on-error: true
 
-      - name: Package Applications
+      - name: Package Applications (Fallback if tests skipped)
+        if: ${{ github.event.inputs.skip_tests == 'true' }}
         run: |
-          echo "=== Compiling JAR Artifacts ==="
+          echo "=== Compiling JAR Artifacts Only ==="
           mvn -B -f catalog/pom.xml package -DskipTests -Dmaven.javadoc.skip=true
           mvn -B -f reservation/pom.xml package -DskipTests -Dmaven.javadoc.skip=true
           mvn -B -f payment/pom.xml package -DskipTests -Dmaven.javadoc.skip=true
@@ -126,8 +147,8 @@ jobs:
               echo "❌ Service $SERVICE contains critical errors!"
               docker compose logs $SERVICE --tail=100
               exit 1
-            echo "✅ Service $SERVICE: Clean logs"
             fi
+            echo "✅ Service $SERVICE: Clean logs"
           done
 
       - name: Push Docker Images to Registry

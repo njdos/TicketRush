@@ -120,7 +120,10 @@ jobs:
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
+          echo "=== Normalizing Line Endings for Init Scripts (CRLF to LF) ==="
           find . -name "*.sh" -exec sed -i 's/\r$//' {} +
+          echo "=== Granting Executable Permissions to Init Scripts ==="
+          chmod +x init-scripts/01-init-databases.sh
           echo "=== Deploying Local Mesh for Verification ==="
           DOCKER_REGISTRY=$DOCKER_USER TAG=latest docker compose up -d
 

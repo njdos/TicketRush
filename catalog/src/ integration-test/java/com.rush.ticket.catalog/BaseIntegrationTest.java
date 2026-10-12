@@ -1,12 +1,10 @@
-package com.rush.ticket.catalog.integration;
+package com.rush.ticket.catalog;
 
-import com.rush.ticket.catalog.CatalogApplication;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-
 
 @SpringBootTest(
         classes = CatalogApplication.class,

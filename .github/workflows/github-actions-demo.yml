@@ -58,19 +58,19 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           echo "=== Running Multi-Module Tests & Static Analysis ==="
-          mvn -B clean verify sonar:sonar \
+          mvn -B clean verify sonar:sonar -Pintegration-tests \
             -f catalog/pom.xml \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.qualitygate.wait=true
           
-          mvn -B clean verify sonar:sonar \
+          mvn -B clean verify sonar:sonar -Pintegration-tests \
             -f reservation/pom.xml \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.qualitygate.wait=true
           
-          mvn -B clean verify sonar:sonar \
+          mvn -B clean verify sonar:sonar -Pintegration-tests \
             -f payment/pom.xml \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.host.url=$SONAR_HOST_URL \

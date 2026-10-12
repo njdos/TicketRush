@@ -1,14 +1,13 @@
-package com.rush.ticket.catalog.integration.services;
+package com.rush.ticket.catalog.services;
 
+import com.rush.ticket.catalog.BaseIntegrationTest;
 import com.rush.ticket.catalog.dto.req.EventRequestDto;
 import com.rush.ticket.catalog.dto.resp.EventResponseDto;
 import com.rush.ticket.catalog.entity.Event;
 import com.rush.ticket.catalog.exception.EventNotFoundException;
-import com.rush.ticket.catalog.integration.BaseIntegrationTest;
 import com.rush.ticket.catalog.kafka.OutboxProcessor;
 import com.rush.ticket.catalog.repository.EventRepository;
 import com.rush.ticket.catalog.repository.OutboxEventRepository;
-import com.rush.ticket.catalog.services.EventService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

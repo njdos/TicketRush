@@ -3,7 +3,6 @@ package com.rush.ticket.catalog.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.rush.ticket.catalog.controllers.CatalogController;
 import com.rush.ticket.catalog.dto.req.EventRequestDto;
 import com.rush.ticket.catalog.dto.resp.EventResponseDto;
 import com.rush.ticket.catalog.services.EventService;

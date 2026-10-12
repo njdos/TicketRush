@@ -61,7 +61,8 @@ jobs:
           echo "=== Running Multi-Module Tests & Static Analysis ==="
           for MODULE in catalog reservation payment; do
             if [ "$MODULE" = "catalog" ]; then GATE=true; else GATE=false; fi
-            mvn -B clean verify sonar:sonar -Pintegration-tests \
+            mvn -B clean verify \
+              org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
               -f $MODULE/pom.xml \
               -Dsonar.token=$SONAR_TOKEN \
               -Dsonar.host.url=$SONAR_HOST_URL \

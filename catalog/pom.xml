@@ -251,10 +251,10 @@
 					<argLine>@{surefireArgLine}</argLine>
 					<includes>
 						<include>**/*Test.java</include>
-						<include>**/*TestSuite.java</include>
 					</includes>
 					<excludes>
 						<exclude>**/*IT.java</exclude>
+						<exclude>**/*TestSuite.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -264,7 +264,7 @@
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>${maven-failsafe-plugin.version}</version>
 				<configuration>
-					<skipTests>true</skipTests>
+					<skipTests>false</skipTests>
 				</configuration>
 			</plugin>
 

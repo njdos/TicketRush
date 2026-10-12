@@ -66,8 +66,8 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("ConstraintViolation: duplicate parameter keeps the first message")
-    void handleConstraintViolation_duplicateParameter_keepsFirstMessage() {
+    @DisplayName("ConstraintViolation: duplicate parameter does not fail and yields a single entry")
+    void handleConstraintViolation_duplicateParameter_collapsesToSingleEntry() {
         Set<ConstraintViolation<Object>> violations = new LinkedHashSet<>();
         violations.add(violation("getEvents.page", "first"));
         violations.add(violation("getEvents.page", "second"));
@@ -75,10 +75,14 @@ class GlobalExceptionHandlerTest {
         ResponseEntity<Object> response =
                 handler.handleConstraintViolation(new ConstraintViolationException(violations), request);
 
-        assertThat(body(response).getProperties())
-                .containsEntry("invalid_parameters", Map.of("page", "first"));
-    }
+        @SuppressWarnings("unchecked")
+        Map<String, String> invalidParameters =
+                (Map<String, String>) body(response).getProperties().get("invalid_parameters");
 
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(invalidParameters).containsOnlyKeys("page");
+        assertThat(invalidParameters.get("page")).isIn("first", "second");
+    }
     // ---------- MethodArgumentNotValidException ----------
 
     @Test

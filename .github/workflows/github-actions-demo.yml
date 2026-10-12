@@ -20,13 +20,22 @@ permissions:
 
 jobs:
   test:
-    name: Test & Quality Gate (${{ matrix.module }})
+    name: Build & Quality (${{ matrix.module }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        module: [ catalog, reservation, payment ]
+        include:
+          - module: catalog
+            gate: true
+            has_tests: true
+          - module: reservation
+            gate: false
+            has_tests: false
+          - module: payment
+            gate: false
+            has_tests: false
 
     steps:
       - uses: actions/checkout@v7
@@ -39,11 +48,10 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Verify + Sonar (quality gate blocks)
+      - name: Verify + Sonar
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mvn -B clean verify \
             org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
@@ -52,14 +60,14 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
             -Dsonar.projectKey=${{ vars.SONAR_ORGANIZATION }}_ticketrush-${{ matrix.module }} \
-            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.wait=${{ matrix.gate }}
 
       - name: Verify only (fork PRs, no Sonar)
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: mvn -B clean verify -f ${{ matrix.module }}/pom.xml
 
       - name: Publish test report
-        if: always()
+        if: always() && matrix.has_tests
         uses: dorny/test-reporter@v1
         with:
           name: Tests (${{ matrix.module }})

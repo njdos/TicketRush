@@ -4,7 +4,7 @@ The **Catalog Service** is a core microservice responsible for managing the dire
 
 ## 🚀 Tech Stack
 
-* **Java 17**
+* **Java 21**
 * **Spring Boot 3.4.0** (Spring Data JPA, Spring Web, Spring Validation)
 * **PostgreSQL 16** (Primary Database)
 * **Maven** (Build Tool)
@@ -56,7 +56,7 @@ The service implements a two-tiered testing strategy to ensure rapid feedback cy
 
 ### Prerequisites
 * **Docker Desktop** installed and running (mandatory for integration test suites).
-* **JDK 17** & **Maven** configured locally.
+* **JDK 21** & **Maven** configured locally.
 
 ### Executing Tests
 To execute all unit and integration test components (including setting up the Postgres container cluster on-the-fly), run:

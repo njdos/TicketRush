@@ -4,7 +4,7 @@ The **Reservation Service** is the high-concurrency, mission-critical core of th
 
 ## 🚀 Tech Stack
 
-* **Java 17**
+* **Java 21**
 * **Spring Boot 3.4.0** (Spring Data JPA, Spring Web, Spring Validation, Spring Kafka)
 * **PostgreSQL 16** (Primary Database)
 * **Redis 7** (Distributed Locks, Rate Limiting, and Highload Seat Pre-caching)
@@ -61,7 +61,7 @@ The service implements a two-tiered testing strategy to ensure rapid feedback cy
 
 ### Prerequisites
 * **Docker Desktop** installed and running (mandatory for integration test suites running Postgres, Redis, and Kafka in containers).
-* **JDK 17** & **Maven** configured locally.
+* **JDK 21** & **Maven** configured locally.
 
 ### Executing Tests
 To execute all unit and integration test components (including setting up the distributed container cluster on-the-fly), run:

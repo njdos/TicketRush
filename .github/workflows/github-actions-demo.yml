@@ -120,6 +120,7 @@ jobs:
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
+          find . -name "*.sh" -exec sed -i 's/\r$//' {} +
           echo "=== Deploying Local Mesh for Verification ==="
           DOCKER_REGISTRY=$DOCKER_USER TAG=latest docker compose up -d
 

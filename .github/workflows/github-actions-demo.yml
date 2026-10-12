@@ -72,7 +72,9 @@ jobs:
 
       - name: Debug JaCoCo files
         if: always()
-        run: ls -la catalog/target/jacoco.exec catalog/target/site/jacoco/ || true
+        run: |
+          ls -la catalog/target/*.exec catalog/target/jacoco-output/ 2>&1 || true
+          ls -la catalog/target/site/jacoco/ 2>&1 || true
 
       - name: Publish Test Report
         uses: dorny/test-reporter@v1

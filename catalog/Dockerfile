@@ -1,4 +1,4 @@
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 COPY pom.xml .
 COPY .mvn/ .mvn/
@@ -7,12 +7,12 @@ COPY src ./src
 RUN --mount=type=cache,target=/root/.m2,sharing=locked \
     ./mvnw clean package -B -DskipTests -Dmaven.javadoc.skip=true
 
-FROM eclipse-temurin:17-jre-alpine AS extractor
+FROM eclipse-temurin:21-jre-alpine AS extractor
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 RUN java -Djarmode=layertools -jar app.jar extract --destination /app/extracted
 
-FROM eclipse-temurin:17-jre-alpine AS runtime
+FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 
 # Создаем системных пользователей динамически (для каталога - catalog, для резервации - reservation и т.д.)

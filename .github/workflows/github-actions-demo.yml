@@ -44,10 +44,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v6
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
 
@@ -120,6 +120,7 @@ jobs:
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
+          find . -name "*.sh" -exec sed -i 's/\r$//' {} +
           echo "=== Deploying Local Mesh for Verification ==="
           DOCKER_REGISTRY=$DOCKER_USER TAG=latest docker compose up -d
 

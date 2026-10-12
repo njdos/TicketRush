@@ -1,227 +1,232 @@
-networks:
-  public-edge:
-    name: tr-public-edge
-    driver: bridge
-  internal-mesh:
-    name: tr-internal-mesh
-    driver: bridge
-  secure-data:
-    name: tr-secure-data
-    driver: bridge
-#    internal: true
+  networks:
+    public-edge:
+      name: tr-public-edge
+      driver: bridge
+    internal-mesh:
+      name: tr-internal-mesh
+      driver: bridge
+    secure-data:
+      name: tr-secure-data
+      driver: bridge
+  #    internal: true
 
-volumes:
-  pg_cluster_data:
-  redis_cache_data:
+  volumes:
+    pg_cluster_data:
+    redis_cache_data:
 
-secrets:
-  postgres_user:
-    file: ./secrets/postgres_user.txt
-  postgres_password:
-    file: ./secrets/postgres_password.txt
-  kafka_cluster_id:
-    file: ./secrets/kafka_cluster_id.txt
+  secrets:
+    postgres_user:
+      file: ./secrets/postgres_user.txt
+    postgres_password:
+      file: ./secrets/postgres_password.txt
+    kafka_cluster_id:
+      file: ./secrets/kafka_cluster_id.txt
 
-services:
-  catalog-service:
-    build:
-      context: ./catalog
-      dockerfile: Dockerfile
-    image: ${DOCKER_REGISTRY:-local}/tr-catalog-service:${TAG:-latest}
-    container_name: tr-catalog-service
-    ports:
-      - "127.0.0.1:8085:8081"
-    networks:
-      - public-edge
-      - internal-mesh
-      - secure-data
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    restart: on-failure:5
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
-    secrets:
-      - postgres_user
-      - postgres_password
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_CATALOG}
-      - SPRING_CONFIG_IMPORT=optional:configtree:/run/secrets/
-      - SPRING_DATASOURCE_USERNAME=$${postgres_user}
-      - SPRING_DATASOURCE_PASSWORD=$${postgres_password}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - JDK_JAVA_OPTIONS=${JVM_OPTIMIZED_OPTIONS}
-      - GC_LOG_OPTIONS=${JVM_GC_LOGS}
-    mem_limit: 768M
-    cpus: '2.0'
+  services:
+    catalog-service:
+      build:
+        context: ./catalog
+        dockerfile: Dockerfile
+      image: ${DOCKER_REGISTRY:-local}/tr-catalog-service:${TAG:-latest}
+      container_name: tr-catalog-service
+      ports:
+        - "127.0.0.1:8085:8081"
+      networks:
+        - public-edge
+        - internal-mesh
+        - secure-data
+      depends_on:
+        postgres:
+          condition: service_healthy
+        kafka:
+          condition: service_healthy
+      restart: on-failure:5
+      tmpfs:
+        - /tmp
+      security_opt:
+        - no-new-privileges:true
+      secrets:
+        - postgres_user
+        - postgres_password
+      environment:
+        - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_CATALOG}
+        - SPRING_CONFIG_IMPORT=optional:configtree:/run/secrets/
+        - SPRING_DATASOURCE_USERNAME=$${postgres_user}
+        - SPRING_DATASOURCE_PASSWORD=$${postgres_password}
+        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+        - JDK_JAVA_OPTIONS=${JVM_OPTIMIZED_OPTIONS}
+        - GC_LOG_OPTIONS=${JVM_GC_LOGS}
+      mem_limit: 768M
+      cpus: '2.0'
 
-  reservation-service:
-    build:
-      context: ./reservation
-      dockerfile: Dockerfile
-    image: ${DOCKER_REGISTRY:-local}/tr-reservation-service:${TAG:-latest}
-    container_name: tr-reservation-service
-    ports:
-      - "127.0.0.1:8082:8082"
-    networks:
-      - public-edge
-      - internal-mesh
-      - secure-data
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    restart: on-failure:5
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
-    secrets:
-      - postgres_user
-      - postgres_password
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_RESERVATION}
-      - SPRING_CONFIG_IMPORT=optional:configtree:/run/secrets/
-      - SPRING_DATASOURCE_USERNAME=$${postgres_user}
-      - SPRING_DATASOURCE_PASSWORD=$${postgres_password}
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - JDK_JAVA_OPTIONS=${JVM_OPTIMIZED_OPTIONS}
-      - GC_LOG_OPTIONS=${JVM_GC_LOGS}
-    mem_limit: 768M
-    cpus: '2.0'
+    reservation-service:
+      build:
+        context: ./reservation
+        dockerfile: Dockerfile
+      image: ${DOCKER_REGISTRY:-local}/tr-reservation-service:${TAG:-latest}
+      container_name: tr-reservation-service
+      ports:
+        - "127.0.0.1:8082:8082"
+      networks:
+        - public-edge
+        - internal-mesh
+        - secure-data
+      depends_on:
+        postgres:
+          condition: service_healthy
+        redis:
+          condition: service_healthy
+        kafka:
+          condition: service_healthy
+      restart: on-failure:5
+      tmpfs:
+        - /tmp
+      security_opt:
+        - no-new-privileges:true
+      secrets:
+        - postgres_user
+        - postgres_password
+      environment:
+        - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_RESERVATION}
+        - SPRING_CONFIG_IMPORT=optional:configtree:/run/secrets/
+        - SPRING_DATASOURCE_USERNAME=$${postgres_user}
+        - SPRING_DATASOURCE_PASSWORD=$${postgres_password}
+        - SPRING_DATA_REDIS_HOST=redis
+        - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
+        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+        - JDK_JAVA_OPTIONS=${JVM_OPTIMIZED_OPTIONS}
+        - GC_LOG_OPTIONS=${JVM_GC_LOGS}
+      mem_limit: 768M
+      cpus: '2.0'
 
-  payment-service:
-    build:
-      context: ./payment
-      dockerfile: Dockerfile
-    image: ${DOCKER_REGISTRY:-local}/tr-payment-service:${TAG:-latest}
-    container_name: tr-payment-service
-    ports:
-      - "127.0.0.1:8086:8083"
-    networks:
-      - public-edge
-      - internal-mesh
-      - secure-data
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    restart: on-failure:5
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
-    secrets:
-      - postgres_user
-      - postgres_password
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_PAYMENT}
-      - SPRING_CONFIG_IMPORT=optional:configtree:/run/secrets/
-      - SPRING_DATASOURCE_USERNAME=$${postgres_user}
-      - SPRING_DATASOURCE_PASSWORD=$${postgres_password}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - JDK_JAVA_OPTIONS=${JVM_OPTIMIZED_OPTIONS}
-      - GC_LOG_OPTIONS=${JVM_GC_LOGS}
-    mem_limit: 768M
-    cpus: '2.0'
+    payment-service:
+      build:
+        context: ./payment
+        dockerfile: Dockerfile
+      image: ${DOCKER_REGISTRY:-local}/tr-payment-service:${TAG:-latest}
+      container_name: tr-payment-service
+      ports:
+        - "127.0.0.1:8086:8083"
+      networks:
+        - public-edge
+        - internal-mesh
+        - secure-data
+      depends_on:
+        postgres:
+          condition: service_healthy
+        kafka:
+          condition: service_healthy
+      restart: on-failure:5
+      tmpfs:
+        - /tmp
+      security_opt:
+        - no-new-privileges:true
+      secrets:
+        - postgres_user
+        - postgres_password
+      environment:
+        - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_PAYMENT}
+        - SPRING_CONFIG_IMPORT=optional:configtree:/run/secrets/
+        - SPRING_DATASOURCE_USERNAME=$${postgres_user}
+        - SPRING_DATASOURCE_PASSWORD=$${postgres_password}
+        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+        - JDK_JAVA_OPTIONS=${JVM_OPTIMIZED_OPTIONS}
+        - GC_LOG_OPTIONS=${JVM_GC_LOGS}
+      mem_limit: 768M
+      cpus: '2.0'
 
-  postgres:
-    image: postgres:15-alpine
-    container_name: tr-postgres-cluster
-    ports:
-      - "5433:5432"
-    networks:
-      - secure-data
-    security_opt:
-      - no-new-privileges:true
-    secrets:
-      - postgres_user
-      - postgres_password
-    environment:
-      - POSTGRES_USER_FILE=/run/secrets/postgres_user
-      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
-      - POSTGRES_MULTIPLE_DATABASES=${DB_CATALOG},${DB_RESERVATION},${DB_PAYMENT}
-    volumes:
-      - pg_cluster_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$(cat /run/secrets/postgres_user)" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    postgres:
+      image: postgres:15-alpine
+      container_name: tr-postgres-cluster
+      ports:
+        - "5433:5432"
+      networks:
+        - secure-data
+      security_opt:
+        - no-new-privileges:true
+      secrets:
+        - postgres_user
+        - postgres_password
+      environment:
+        - POSTGRES_USER_FILE=/run/secrets/postgres_user
+        - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+        - POSTGRES_MULTIPLE_DATABASES=${DB_CATALOG},${DB_RESERVATION},${DB_PAYMENT}
+      volumes:
+        - pg_cluster_data:/var/lib/postgresql/data
+        - ./init-scripts:/mnt/init-scripts
+      command: >
+        sh -c "tr -d '\r\357\273\277' < /mnt/init-scripts/01-init-databases.sh > /docker-entrypoint-initdb.d/01-init-databases.sh &&
+               chmod +x /docker-entrypoint-initdb.d/01-init-databases.sh &&
+               docker-entrypoint.sh postgres"
+      healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U $$(cat /run/secrets/postgres_user)" ]
+        interval: 5s
+        timeout: 5s
+        retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: tr-redis-cache
-    ports:
-      - "6379:6379"
-    networks:
-      - secure-data
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - redis_cache_data:/data
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: tr-kafka-broker
-    ports:
-      - "9092:9092"
-      - "9094:9094"
-    networks:
-      - internal-mesh
-    environment:
-      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,LOCAL:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093,LOCAL://0.0.0.0:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,LOCAL://localhost:9094
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1 || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 20s
+    redis:
+      image: redis:7-alpine
+      container_name: tr-redis-cache
+      ports:
+        - "6379:6379"
+      networks:
+        - secure-data
+      security_opt:
+        - no-new-privileges:true
+      volumes:
+        - redis_cache_data:/data
+      healthcheck:
+        test: [ "CMD", "redis-cli", "ping" ]
+        interval: 5s
+        timeout: 3s
+        retries: 5
 
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: tr-kafka-dashboard
-    ports:
-      - "127.0.0.1:8080:8080"
-    networks:
-      - public-edge
-      - internal-mesh
-    depends_on:
-      kafka:
-        condition: service_healthy
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      - KAFKA_CLUSTERS_0_NAME=ticketrush-local-cluster
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    kafka:
+      image: confluentinc/cp-kafka:7.5.0
+      container_name: tr-kafka-broker
+      ports:
+        - "9092:9092"
+        - "9094:9094"
+      networks:
+        - internal-mesh
+      environment:
+        CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+        KAFKA_NODE_ID: 1
+        KAFKA_PROCESS_ROLES: broker,controller
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,LOCAL:PLAINTEXT
+        KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093,LOCAL://0.0.0.0:9094
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,LOCAL://localhost:9094
+        KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+        KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+        KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+        KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      healthcheck:
+        test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1 || exit 1"]
+        interval: 10s
+        timeout: 10s
+        retries: 10
+        start_period: 20s
+
+    kafka-ui:
+      image: provectuslabs/kafka-ui:latest
+      container_name: tr-kafka-dashboard
+      ports:
+        - "127.0.0.1:8080:8080"
+      networks:
+        - public-edge
+        - internal-mesh
+      depends_on:
+        kafka:
+          condition: service_healthy
+      security_opt:
+        - no-new-privileges:true
+      environment:
+        - KAFKA_CLUSTERS_0_NAME=ticketrush-local-cluster
+        - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092

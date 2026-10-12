@@ -157,10 +157,13 @@
       volumes:
         - pg_cluster_data:/var/lib/postgresql/data
         - ./init-scripts:/mnt/init-scripts
-      command: >
-        sh -c "tr -d '\r\357\273\277' < /mnt/init-scripts/01-init-databases.sh > /docker-entrypoint-initdb.d/01-init-databases.sh &&
-               chmod +x /docker-entrypoint-initdb.d/01-init-databases.sh &&
-               docker-entrypoint.sh postgres"
+      command:
+        - sh
+        - -c
+        - |
+          tr -d '\r\357\273\277' < /mnt/init-scripts/01-init-databases.sh > /docker-entrypoint-initdb.d/01-init-databases.sh
+          chmod +x /docker-entrypoint-initdb.d/01-init-databases.sh
+          exec docker-entrypoint.sh postgres
       healthcheck:
         test: [ "CMD-SHELL", "pg_isready -U $$(cat /run/secrets/postgres_user)" ]
         interval: 5s

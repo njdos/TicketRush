@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER_FILE
+              value: "/etc/secrets/postgres_user"
+            - name: POSTGRES_PASSWORD_FILE
+              value: "/etc/secrets/postgres_password"
+            - name: POSTGRES_MULTIPLE_DATABASES
+              value: "catalog_db,reservation_db,payment_db"
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: pg-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+            - name: secrets-volume
+              mountPath: /etc/secrets
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: pg-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+        - name: init-scripts
+          configMap:
+            name: postgres-init-script
+            defaultMode: 0755
+        - name: secrets-volume
+          secret:
+            secretName: tr-secrets

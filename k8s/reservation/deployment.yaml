@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: reservation-service
+  labels:
+    app: reservation-service
 spec:
   replicas: 1
   selector:
@@ -12,29 +14,34 @@ spec:
       labels:
         app: reservation-service
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
       containers:
         - name: reservation-service
           image: local/tr-reservation-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
-          resources:
-            limits:
-              memory: "768Mi"
-              cpu: "2000m"
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "local"
+              value: "prod"
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://postgres:5432/reservation_db"
-            - name: SPRING_CONFIG_IMPORT
-              value: "optional:configtree:/app/secrets/"
             - name: SPRING_DATA_REDIS_HOST
               value: "redis"
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "kafka:9092"
+            - name: JDK_JAVA_OPTIONS
+              value: "-XX:+UseG1GC -XX:MaxRAMPercentage=75.0"
+            - name: GC_LOG_OPTIONS
+              value: "-Xlog:gc*"
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configtree:/etc/secrets/"
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -45,10 +52,24 @@ spec:
                 secretKeyRef:
                   name: tr-secrets
                   key: postgres_password
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
           volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
             - name: secrets-volume
-              mountPath: /app/secrets
+              mountPath: /etc/secrets
+              readOnly: true
       volumes:
+        - name: tmp-volume
+          emptyDir: {}
         - name: secrets-volume
           secret:
             secretName: tr-secrets

@@ -3,6 +3,7 @@
 .env.local
 *.local.properties
 secrets/
+secret.yaml
 
 # SYSTEM & APPLICATION LOGS / DUMPS
 *.log

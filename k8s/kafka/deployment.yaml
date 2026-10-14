@@ -23,6 +23,26 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9092
+          livenessProbe:
+            exec:
+              command:
+                - kafka-broker-api-versions.sh
+                - --bootstrap-server
+                - localhost:9092
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - kafka-broker-api-versions.sh
+                - --bootstrap-server
+                - localhost:9092
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           env:
             - name: CLUSTER_ID
               valueFrom:

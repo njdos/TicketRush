@@ -22,6 +22,26 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - "$(cat /etc/secrets/postgres_user)"
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - "$(cat /etc/secrets/postgres_user)"
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 5
           env:
             - name: POSTGRES_USER_FILE
               value: "/etc/secrets/postgres_user"

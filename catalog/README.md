@@ -19,10 +19,10 @@ All endpoints wrap their payload inside a standardized `ApiResponse<T>` structur
 
 | Method | Endpoint | Description | Parameters / Headers |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/events` | Create a new event | Header: `X-User-Id` (UUID of the Organizer) |
-| **GET** | `/events` | Retrieve a paged list of events | Query: `page` (default 0), `size` (default 20) |
-| **GET** | `/events/{id}` | Fetch a specific event by ID | Path: `id` (UUID of the event) |
-| **PUT** | `/events/{id}` | Update an existing event's details | Path: `id` (UUID of the event) + JSON Body |
+| **POST** | `/api/v1/catalog/events` | Create a new event | Header: `X-User-Id` (UUID of the Organizer) |
+| **GET** | `/api/v1/catalog/events` | Retrieve a paged list of events | Query: `page` (default 0), `size` (default 20) |
+| **GET** | `/api/v1/catalog/events/{id}` | Fetch a specific event by ID | Path: `id` (UUID of the event) |
+| **PUT** | `/api/v1/catalog/events/{id}` | Update an existing event's details | Path: `id` (UUID of the event) + JSON Body |
 
 ---
 

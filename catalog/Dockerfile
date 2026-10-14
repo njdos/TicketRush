@@ -15,7 +15,6 @@ RUN java -Djarmode=layertools -jar app.jar extract --destination /app/extracted
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 
-# Создаем системных пользователей динамически (для каталога - catalog, для резервации - reservation и т.д.)
 RUN addgroup --gid 10001 --system ticketrush \
     && adduser --uid 10001 --system --ingroup ticketrush --home /home/catalog catalog \
     && mkdir -p /app/dumps /app/logs \
@@ -29,5 +28,4 @@ COPY --from=extractor --chown=catalog:ticketrush /app/extracted/application/ ./
 USER catalog:ticketrush
 EXPOSE 8081
 
-# Инструкция запуска считывает внешние переменные среды, сгенерированные Docker Compose/Kubernetes
 ENTRYPOINT ["sh", "-c", "java ${GC_LOG_OPTIONS} ${JDK_JAVA_OPTIONS} org.springframework.boot.loader.launch.JarLauncher"]

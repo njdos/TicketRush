@@ -89,7 +89,7 @@ class CatalogControllerTest {
                 .thenReturn(responseDto);
 
         // Act & Assert
-        mockMvc.perform(post("/events")
+        mockMvc.perform(post("/api/v1/catalog/events")
                         .header("X-User-Id", organizerId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
@@ -105,7 +105,7 @@ class CatalogControllerTest {
         when(eventService.listEvents(any(Pageable.class))).thenReturn(page);
 
         // Act & Assert
-        mockMvc.perform(get("/events")
+        mockMvc.perform(get("/api/v1/catalog/events")
                         .param("page", "0")
                         .param("size", "20")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -118,7 +118,7 @@ class CatalogControllerTest {
         when(eventService.getEventById(sampleId)).thenReturn(responseDto);
 
         // Act & Assert
-        mockMvc.perform(get("/events/{id}", sampleId)
+        mockMvc.perform(get("/api/v1/catalog/events/{id}", sampleId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -130,7 +130,7 @@ class CatalogControllerTest {
                 .thenReturn(responseDto);
 
         // Act & Assert
-        mockMvc.perform(put("/events/{id}", sampleId)
+        mockMvc.perform(put("/api/v1/catalog/events/{id}", sampleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk());

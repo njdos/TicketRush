@@ -10,7 +10,7 @@ import java.util.*
 import kotlin.properties.Delegates
 
 @RestController
-@RequestMapping("/payments")
+@RequestMapping("/api/v1/payment/payments")
 class PaymentController(
     private val paymentService: PaymentService,
     private val mockConfig: PaymentMockConfig

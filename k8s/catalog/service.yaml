@@ -5,10 +5,9 @@ metadata:
   labels:
     app: catalog-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
       app: catalog-service
   ports:
     - port: 8081
       targetPort: 8081
-      protocol: TCP

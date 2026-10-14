@@ -5,10 +5,9 @@ metadata:
   labels:
     app: reservation-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: reservation-service
   ports:
     - port: 8082
       targetPort: 8082
-      protocol: TCP

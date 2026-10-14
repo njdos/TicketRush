@@ -23,6 +23,9 @@ jobs:
     name: Build & Quality (${{ matrix.module }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: write
     strategy:
       fail-fast: false
       matrix:
@@ -52,12 +55,13 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           mvn -B clean verify \
             org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar \
             -f ${{ matrix.module }}/pom.xml \
-            -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.token="$SONAR_TOKEN" \
+            -Dsonar.host.url="$SONAR_HOST_URL" \
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
             -Dsonar.projectKey=${{ vars.SONAR_ORGANIZATION }}_ticketrush-${{ matrix.module }} \
             -Dsonar.qualitygate.wait=${{ matrix.gate }}
@@ -68,7 +72,7 @@ jobs:
 
       - name: Publish test report
         if: always() && matrix.has_tests
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5
         with:
           name: Tests (${{ matrix.module }})
           path: '${{ matrix.module }}/target/*-reports/*.xml'
@@ -117,7 +121,7 @@ jobs:
             fi
           done
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}

@@ -1,8 +1,16 @@
 package com.rush.ticket.catalog.exception;
 
+import io.github.resilience4j.bulkhead.BulkheadFullException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.http.*;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,6 +26,8 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private static final URI BASE_URI = URI.create("https://rush-ticket.com/errors");
 
@@ -71,15 +81,61 @@ public class GlobalExceptionHandler {
         AppErrorCode errorCode = ex.getErrorCode();
         HttpStatus status = errorCode.getHttpStatus();
 
+        log.info("Domain error {} ({}): {}", errorCode.name(), errorCode.getCode(), ex.getMessage());
         ProblemDetail problemDetail = createProblemDetail(errorCode, status, ex.getMessage());
 
         return buildResponseEntity(problemDetail, status);
+    }
+
+    // ---------- Resilience4j / infrastructure ----------
+
+    @ExceptionHandler(CallNotPermittedException.class)
+    public ResponseEntity<Object> handleCircuitOpen(CallNotPermittedException ex, WebRequest request) {
+        log.warn("Circuit '{}' is open, request rejected", ex.getCausingCircuitBreakerName());
+        return unavailable("Dependency is temporarily unavailable, please retry later", 10);
+    }
+
+    @ExceptionHandler(BulkheadFullException.class)
+    public ResponseEntity<Object> handleBulkheadFull(BulkheadFullException ex, WebRequest request) {
+        log.warn("Bulkhead is full, request rejected: {}", ex.getMessage());
+        return unavailable("Server is busy, please retry later", 1);
+    }
+
+    @ExceptionHandler({
+            CannotCreateTransactionException.class,
+            DataAccessResourceFailureException.class,
+            TransientDataAccessException.class
+    })
+    public ResponseEntity<Object> handleDatabaseUnavailable(Exception ex, WebRequest request) {
+        log.error("Database unavailable", ex);
+        return unavailable("Database is temporarily unavailable, please retry later", 5);
+    }
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<Object> handleRateLimited(RequestNotPermitted ex, WebRequest request) {
+        log.debug("Rate limit exceeded: {}", ex.getMessage()); // DEBUG on purpose: can be very noisy under abuse, counted by metrics
+        AppErrorCode errorCode = AppErrorCode.TOO_MANY_REQUESTS;
+        HttpStatus status = errorCode.getHttpStatus();
+        ProblemDetail problemDetail = createProblemDetail(errorCode, status, "Rate limit exceeded, slow down");
+        return ResponseEntity.status(status).header(HttpHeaders.RETRY_AFTER, "1").body(problemDetail);
+    }
+
+    private ResponseEntity<Object> unavailable(String detail, int retryAfterSeconds) {
+        AppErrorCode errorCode = AppErrorCode.SERVICE_UNAVAILABLE;
+        HttpStatus status = errorCode.getHttpStatus();
+        ProblemDetail problemDetail = createProblemDetail(errorCode, status, detail);
+        return ResponseEntity.status(status)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds))
+                .body(problemDetail);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllUnexpectedExceptions(Exception ex, WebRequest request) {
         AppErrorCode errorCode = AppErrorCode.INTERNAL_SERVER_ERROR;
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+
+        // Previously this exception was swallowed without a trace: the client got trace_id but logs had nothing.
+        log.error("Unhandled exception", ex);
 
         ProblemDetail problemDetail = createProblemDetail(errorCode, status, "An unexpected error occurred. Please contact support.");
 

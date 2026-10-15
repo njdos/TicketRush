@@ -207,8 +207,8 @@ Key decisions are documented as ADRs in [`docs/adr/`](docs/adr/):
 | CI (GitHub Actions, SonarQube)              | ✅ implemented  |
 | Kubernetes manifests                        | ✅ implemented  |
 | Migration (flyway)                          | ✅ implemented  |
-| Resilience4j (circuit breaker, fallback)    | 🚧 in progress |
-| Prometheus + Grafana                        | 🚧 in progress  |
+| Resilience4j (circuit breaker, fallback)    | ✅ implemented |
+| Prometheus + Grafana                        | ✅ implemented  |
 | Distributed tracing (OpenTelemetry)         | 📋 planned |
 | k6 load tests                               | 📋 planned |
 | Gateway + JWT                               | 📋 planned |

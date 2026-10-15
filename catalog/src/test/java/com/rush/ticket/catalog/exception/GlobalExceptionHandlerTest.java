@@ -1,5 +1,11 @@
 package com.rush.ticket.catalog.exception;
 
+import io.github.resilience4j.bulkhead.Bulkhead;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -151,6 +157,40 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
         assertCommon(problem, errorCode, expectedStatus);
         assertThat(problem.getDetail()).isEqualTo("Something domain-specific");
+    }
+
+    // ---------- Resilience4j ----------
+
+    @Test
+    @DisplayName("Open circuit: 503 with Retry-After")
+    void handleCircuitOpen_returns503() {
+        CircuitBreaker cb = CircuitBreaker.ofDefaults("catalogDb");
+        ResponseEntity<Object> response =
+                handler.handleCircuitOpen(CallNotPermittedException.createCallNotPermittedException(cb), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getHeaders().getFirst("Retry-After")).isNotBlank();
+        assertThat(body(response).getProperties()).containsEntry("code", AppErrorCode.SERVICE_UNAVAILABLE.getCode());
+    }
+
+    @Test
+    @DisplayName("Bulkhead full: 503 with Retry-After")
+    void handleBulkheadFull_returns503() {
+        ResponseEntity<Object> response =
+                handler.handleBulkheadFull(BulkheadFullException.createBulkheadFullException(Bulkhead.ofDefaults("b")), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("1");
+    }
+
+    @Test
+    @DisplayName("Rate limit: 429 with Retry-After")
+    void handleRateLimited_returns429() {
+        ResponseEntity<Object> response =
+                handler.handleRateLimited(RequestNotPermitted.createRequestNotPermitted(RateLimiter.ofDefaults("r")), request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("1");
     }
 
     // ---------- Any other exception ----------

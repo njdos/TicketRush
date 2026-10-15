@@ -13,6 +13,8 @@ networks:
 volumes:
   pg_cluster_data:
   redis_cache_data:
+  prometheus_data:
+  grafana_data:
 
 secrets:
   postgres_user:
@@ -21,6 +23,8 @@ secrets:
     file: ./secrets/postgres_password.txt
   kafka_cluster_id:
     file: ./secrets/kafka_cluster_id.txt
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password.txt
 
 services:
   catalog-service:
@@ -233,3 +237,63 @@ services:
     environment:
       - KAFKA_CLUSTERS_0_NAME=ticketrush-local-cluster
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: tr-prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - internal-mesh
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-7d}
+      - --web.enable-lifecycle
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    mem_limit: 512M
+    cpus: '1.0'
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: tr-grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - internal-mesh
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    secrets:
+      - grafana_admin_password
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_admin_password
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/services-overview.json
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    mem_limit: 384M
+    cpus: '1.0'

@@ -41,6 +41,9 @@ public class OutboxEvent {
     @Column(name = "processed_at")
     private Instant processedAt;
 
+    @Column(nullable = false, columnDefinition = "INTEGER NOT NULL DEFAULT 0")
+    private int attempts;
+
     public OutboxEvent(String aggregateId, String eventType, String payload) {
         this.aggregateId = aggregateId;
         this.eventType = eventType;

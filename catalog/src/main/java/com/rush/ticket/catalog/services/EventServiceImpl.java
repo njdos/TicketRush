@@ -11,6 +11,8 @@ import com.rush.ticket.catalog.exception.EventNotFoundException;
 import com.rush.ticket.catalog.mapper.EventMapper;
 import com.rush.ticket.catalog.repository.EventRepository;
 import com.rush.ticket.catalog.repository.OutboxEventRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -38,7 +40,9 @@ public class EventServiceImpl implements EventService {
         this.objectMapper = objectMapper;
     }
 
+    // Writes: circuit breaker only. No @Retry: createEvent has no idempotency key, a retry could duplicate events.
     @Override
+    @CircuitBreaker(name = "catalogDb")
     @Transactional
     public EventResponseDto createEvent(EventRequestDto request, UUID organizerId) {
         Event event = new Event(
@@ -78,13 +82,18 @@ public class EventServiceImpl implements EventService {
         return EventMapper.toResponseDto(saved);
     }
 
+    // Reads: Retry( CircuitBreaker( tx ) ), every attempt gets a fresh transaction/connection.
     @Override
+    @Retry(name = "catalogDb")
+    @CircuitBreaker(name = "catalogDb")
     @Transactional(readOnly = true)
     public Page<EventResponseDto> listEvents(Pageable pageable) {
         return eventRepository.findAll(pageable).map(EventMapper::toResponseDto);
     }
 
     @Override
+    @Retry(name = "catalogDb")
+    @CircuitBreaker(name = "catalogDb")
     @Transactional(readOnly = true)
     public EventResponseDto getEventById(UUID id) {
         Event event = eventRepository.findById(id)
@@ -93,6 +102,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @CircuitBreaker(name = "catalogDb")
     @Transactional
     public EventResponseDto updateEvent(UUID id, EventRequestDto request) {
         Event event = eventRepository.findById(id)

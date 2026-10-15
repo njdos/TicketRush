@@ -2,6 +2,11 @@ spring:
   application:
     name: catalog
 
+  task:
+    scheduling:
+      pool:
+        size: 2     # outbox processor can block on Kafka; metrics refresh must not wait for it
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ticketrush_catalog}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -12,18 +17,21 @@ spring:
       maximum-pool-size: ${HIKARI_MAXIMUM_POOL_SIZE:20}
       idle-timeout: 30000
       max-lifetime: 2000000
-      connection-timeout: 30000
+      connection-timeout: ${HIKARI_CONNECTION_TIMEOUT:3000}   # fail fast when DB is down (was 30s)
       pool-name: CatalogHikariCP
 
   jpa:
+    open-in-view: false   # do not hold a DB connection while the HTTP response is being rendered
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: ${SPRING_JPA_SHOW_SQL:true}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
         format_sql: true
         use_sql_comments: true
+        jakarta.persistence.query.timeout: ${JPA_QUERY_TIMEOUT_MS:5000}
+        session.events.log.LOG_QUERIES_SLOWER_THAN_MS: 500   # slow queries go to logger org.hibernate.SQL_SLOW
 
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -37,6 +45,10 @@ spring:
         acks: all
         retries: 2147483647
         max.in.flight.requests.per.connection: 5
+        # Bounded waits: otherwise send() blocks up to 60s on metadata when the broker is down
+        max.block.ms: 3000
+        request.timeout.ms: 3000
+        delivery.timeout.ms: 5000
 
 server:
   port: 8081
@@ -45,12 +57,28 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
+        include: health,info,prometheus,metrics,circuitbreakers,circuitbreakerevents,retries,retryevents,ratelimiters,bulkheads
   endpoint:
     health:
       show-details: always
       probes:
         enabled: true
+      group:
+        # An open Kafka circuit must NOT take the pod out of rotation:
+        # the outbox keeps accumulating events, reads/writes still work.
+        readiness:
+          include: readinessState,db
+  health:
+    circuitbreakers:
+      enabled: true
+    ratelimiters:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true    # enables histogram_quantile() p95/p99 in Grafana
 
 logging:
   level:
@@ -58,5 +86,98 @@ logging:
     com.rush.ticket.catalog: INFO
     org.postgresql: WARN
     org.apache.kafka: WARN
+    org.hibernate.SQL_SLOW: INFO
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    # readable local format; traceId/userId come from CorrelationIdFilter via MDC
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{traceId:-}] [%X{userId:-}] %logger{30} - %msg%n"
+
+catalog:
+  outbox:
+    send-timeout: 8s        # must be > kafka delivery.timeout.ms
+    max-attempts: 10        # after this the event is marked FAILED
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 15s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+    instances:
+      # Postgres (all reads and writes in EventServiceImpl)
+      catalogDb:
+        base-config: default
+        record-exceptions:
+          - org.springframework.dao.DataAccessResourceFailureException
+          - org.springframework.dao.TransientDataAccessException
+          - org.springframework.transaction.CannotCreateTransactionException
+          - java.util.concurrent.TimeoutException
+        ignore-exceptions:           # business errors are not infrastructure failures
+          - com.rush.ticket.catalog.exception.CatalogDomainException
+      # Kafka publishing from the outbox
+      kafkaPublisher:
+        base-config: default
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        slow-call-duration-threshold: 4s
+        wait-duration-in-open-state: 30s
+        record-exceptions:
+          - com.rush.ticket.catalog.kafka.KafkaPublishException
+
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 100ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        enable-randomized-wait: true          # jitter against thundering herd
+        randomized-wait-factor: 0.5
+    instances:
+      catalogDb:                              # reads only, writes are NOT retried
+        base-config: default
+        retry-exceptions:
+          - org.springframework.dao.DataAccessResourceFailureException
+          - org.springframework.dao.TransientDataAccessException
+          - org.springframework.transaction.CannotCreateTransactionException
+      kafkaPublisher:
+        base-config: default
+        wait-duration: 200ms
+        retry-exceptions:
+          - com.rush.ticket.catalog.kafka.KafkaPublishException
+
+  ratelimiter:
+    instances:
+      catalogWrite:                           # per instance of the service
+        limit-for-period: 50
+        limit-refresh-period: 1s
+        timeout-duration: 0                   # reject immediately (default would wait 5s)
+
+  bulkhead:
+    instances:
+      catalogRead:
+        max-concurrent-calls: 15              # < Hikari max pool (20): leave room for outbox/writes
+        max-wait-duration: 0
+
+---
+# Profile "prod": one JSON object per line (ECS format, built into Spring Boot 3.4).
+# MDC fields (traceId, userId, outboxEventId, aggregateId) become top-level JSON fields,
+# so logs can be filtered by traceId in Loki / ELK / CloudWatch without regexes.
+spring:
+  config:
+    activate:
+      on-profile: prod
+logging:
+  structured:
+    format:
+      console: ecs
+    ecs:
+      service:
+        environment: ${APP_ENV:prod}

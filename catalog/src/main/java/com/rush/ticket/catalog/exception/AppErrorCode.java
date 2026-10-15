@@ -11,6 +11,10 @@ public enum AppErrorCode {
     // Missing Resources
     EVENT_NOT_FOUND("08404", HttpStatus.NOT_FOUND, "Requested catalog resource does not exist"),
 
+    // Resilience (Resilience4j)
+    SERVICE_UNAVAILABLE("XX503", HttpStatus.SERVICE_UNAVAILABLE, "Service temporarily unavailable"),
+    TOO_MANY_REQUESTS("XX429", HttpStatus.TOO_MANY_REQUESTS, "Too many requests"),
+
     // Internal Server Faults
     INTERNAL_SERVER_ERROR("XX500", HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred on the server.");
 
